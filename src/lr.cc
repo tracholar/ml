@@ -1,16 +1,48 @@
 #include "io.h"
 #include<math.h>
 
+typedef void(* OBJECT_FUNCTION)(float, float, float*, float*);
+
 namespace ml{
+    inline float sigmoid(float x){
+        return 1.0/(1 + exp(-x));
+    }
+    inline void object_function_logloss(float score, float y, float *logloss, float *gradient){
+        float p = sigmoid(score);
+        *gradient = p - y;
+        if(y == 1) *logloss = - log(p);
+        else *logloss = -log(1-p);
+    }
+    inline void object_function_mse(float score, float y, float *loss, float *gradient){
+        *gradient = score - y;
+        *loss = 0.5*(*gradient)*(*gradient);
+    }
+    inline void object_function_hinge(float score, float y, float *loss, float *gradient){
+        if(y == 0) y =-1;
+        *loss = 1 - y * score;
+        if(*loss < 0){
+            *loss = 0;
+            *gradient = 0;
+        } else{
+            *gradient = - y;
+        }
+    }
+
+    struct ProblemConf {
+        float lr=1;
+        float reg2=1e-2;
+        float reg1=1e-3;
+        int max_iter=100;
+        bool verbose = true;
+        std::string obj = "logloss";
+    };
+        
     class BinaryLogisticRegression {        
     public:
         std::vector<float> w;
         float b;
 
-        inline float sigmoid(float x){
-            return 1.0/(1 + exp(-x));
-        }
-        void loss_function(Data * dptr, float * loss, std::vector<float> * dw, float * db){
+        void loss_function(Data * dptr, float * loss, std::vector<float> * dw, float * db, OBJECT_FUNCTION obj_func = object_function_logloss){
             assert(dptr->x.size() == dptr->y.size());
 
             *loss = 0;
@@ -25,13 +57,13 @@ namespace ml{
                     float val = dptr->x[i].val[j];
                     p += w[idx] * val;
                 }
-                p = sigmoid(p);
+                //p = sigmoid(p);
                 //fprintf(stderr, "%d %f\n", i, p);
 
                 if(dw != NULL && db != NULL){
-                    float dp = p - dptr->y[i];
-                    if(dptr->y[i] == 1) *loss += - log(p);
-                    else *loss += -log(1-p);
+                    float dp, lossi;
+                    obj_func(p, dptr->y[i], &lossi, &dp);
+                    *loss += lossi;
                     for(int j=0; j<dptr->x[i].idx.size(); j++){
                         int idx = dptr->x[i].idx[j];
                         float val = dptr->x[i].val[j];
@@ -58,24 +90,36 @@ namespace ml{
             b = 0;
         }
 
-        void train(Data * dptr, float lr=1, float reg2=1e-2, float reg1=1e-3, int max_iter=100, bool verbose = true){
+        void train(Data * dptr, ProblemConf conf){
             // init
             init(dptr);
             std::vector<float> dw(w.size());
             float db = 0, loss, old_loss = 1e10;
 
-            if(verbose){
+            if(conf.verbose){
                 fprintf(stderr, "iter\tloss\tlr\n");
             }
-            for(int i=0; i<max_iter; i++){
-                loss_function(dptr, &loss, &dw, &db);
+            float lr = conf.lr, reg1 = conf.reg1, reg2 = conf.reg2;
+            OBJECT_FUNCTION cb;
+            if(conf.obj == "logloss"){
+                cb = object_function_logloss;
+            }else if(conf.obj == "mse"){
+                cb = object_function_mse;
+            }else if(conf.obj == "hinge"){
+                cb = object_function_hinge;
+            }else{
+                fprintf(stderr, "不支持的目标函数类型：%s", conf.obj.c_str());
+                exit(1);
+            }
+            for(int i=0; i<conf.max_iter; i++){
+                loss_function(dptr, &loss, &dw, &db, cb);
                 b -= lr * (db + reg2 * b);
                 for(int j=0; j<dw.size(); j++) {
                     w[j] -= lr * (dw[j] + reg2 * w[j]);
                     if(reg1 > 0 && w[j] > - reg1*lr && w[j] < reg1*lr) w[j] = 0;
                 }
 
-                if(verbose){
+                if(conf.verbose){
                     fprintf(stderr, "%3d\t%.6f\t%.5g\n", i, loss, lr);
                 }
 

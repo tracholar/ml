@@ -6,32 +6,34 @@ using namespace std;
 
 int main(int argc,char **argv){
     string fname;
-    int iter = 100;
-    float reg1 = 1e-3, reg2 = 1e-3, learning_rate = 1;
-    bool verbose = false;
+    ml::ProblemConf c;
     for(int i=0; i<argc; i++){
         if(strcmp(argv[i], "-f") == 0){
             fname = argv[i+1];
             i+= 1;
         }
         if(strcmp(argv[i], "-iter") == 0){
-            iter = atoi(argv[i+1]);
+            c.max_iter = atoi(argv[i+1]);
             i+= 1;
         }
         if(strcmp(argv[i], "-reg1") == 0){
-            reg1 = atof(argv[i+1]);
+            c.reg1 = atof(argv[i+1]);
             i+= 1;
         }
         if(strcmp(argv[i], "-reg2") == 0){
-            reg2 = atof(argv[i+1]);
+            c.reg2 = atof(argv[i+1]);
             i+= 1;
         }
         if(strcmp(argv[i], "-lr") == 0){
-            learning_rate = atof(argv[i+1]);
+            c.lr = atof(argv[i+1]);
+            i+= 1;
+        }
+        if(strcmp(argv[i], "-obj") == 0){
+            c.obj = argv[i+1];
             i+= 1;
         }
         if(strcmp(argv[i], "-v") == 0){
-            verbose = true;
+            c.verbose = true;
         }
         if(strcmp(argv[i], "-h") == 0){
             printf("用法： lr [-h] [-f data.txt] [-iter 100] [-reg1 0.001] [-reg2 0.001] [-lr 1] [-v]\n");
@@ -59,7 +61,7 @@ int main(int argc,char **argv){
     ml::BinaryLogisticRegression lr;
     
     printf("训练模型...\n");
-    lr.train(& data, learning_rate, reg2, reg1, iter, verbose);
+    lr.train(& data, c);
 
     time_t t3 = time(NULL);
     printf("训练模型耗时 %ld s\n", t3 - t2);
