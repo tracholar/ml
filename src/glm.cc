@@ -41,7 +41,7 @@ int main(int argc,char **argv){
             c.verbose = true;
         }
         if(strcmp(argv[i], "-h") == 0){
-            printf("用法： lr [-h] [-f data.txt] [-iter 100] [-reg1 0.001] [-reg2 0.001] [-lr 1] [-v]\n");
+            printf("用法： glm [-h] [-f data.txt] [-iter 100] [-reg1 0.001] [-reg2 0.001] [-lr 1] [-v] [-o output] [-obj logloss]\n");
             exit(0);
         }
     }
