@@ -62,7 +62,11 @@ namespace ml{
             // init
             init(dptr);
             std::vector<float> dw(w.size());
-            float db = 0, loss;
+            float db = 0, loss, old_loss = 1e10;
+
+            if(verbose){
+                fprintf(stderr, "iter\tloss\tlr\n");
+            }
             for(int i=0; i<max_iter; i++){
                 loss_function(dptr, &loss, &dw, &db);
                 b -= lr * (db + reg2 * b);
@@ -70,9 +74,17 @@ namespace ml{
                     w[j] -= lr * (dw[j] + reg2 * w[j]);
                     if(reg1 > 0 && w[j] > - reg1*lr && w[j] < reg1*lr) w[j] = 0;
                 }
+
                 if(verbose){
-                    fprintf(stderr, "%3d\t%.5f\n", i, loss);
+                    fprintf(stderr, "%3d\t%.6f\t%.5g\n", i, loss, lr);
                 }
+
+                /*
+                if(loss > old_loss && lr > 1e-3) lr /= 3;
+                else if(abs(old_loss - loss)/loss < 1e-5 && lr < 100) lr *= 3;
+                old_loss = loss;
+                */
+                
             }
         }
     };

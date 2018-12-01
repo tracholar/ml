@@ -65,6 +65,10 @@ namespace ml {
             }
             
             dptr->x.push_back(x);
+
+            if(dptr->x.size() % 10000 == 0){
+                fprintf(stderr, "已读取 %lu 条记录!\n", dptr->x.size());
+            }
             
         }
     }
