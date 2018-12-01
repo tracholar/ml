@@ -28,7 +28,7 @@ namespace ml{
         }
     }
 
-    struct ProblemConf {
+    struct GLMCONF {
         float lr=1;
         float reg2=1e-2;
         float reg1=1e-3;
@@ -37,7 +37,7 @@ namespace ml{
         std::string obj = "logloss";
     };
         
-    class BinaryLogisticRegression {        
+    class GLM {        
     public:
         std::vector<float> w;
         float b;
@@ -90,7 +90,7 @@ namespace ml{
             b = 0;
         }
 
-        void train(Data * dptr, ProblemConf conf){
+        void train(Data * dptr, GLMCONF conf){
             // init
             init(dptr);
             std::vector<float> dw(w.size());

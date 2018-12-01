@@ -5,11 +5,16 @@
 using namespace std;
 
 int main(int argc,char **argv){
-    string fname;
-    ml::ProblemConf c;
+    string fname, output = "stdout";
+    ml::GLMCONF c;
+
     for(int i=0; i<argc; i++){
         if(strcmp(argv[i], "-f") == 0){
             fname = argv[i+1];
+            i+= 1;
+        }
+        if(strcmp(argv[i], "-o") == 0){
+            output = argv[i+1];
             i+= 1;
         }
         if(strcmp(argv[i], "-iter") == 0){
@@ -49,24 +54,34 @@ int main(int argc,char **argv){
     ml::Data data;
 
     time_t t1 = time(NULL);
-    printf("读取数据...\n");
+    fprintf(stderr, "读取数据...\n");
     ml::read_libsvm(fin, &data);
 
     time_t t2 = time(NULL);
-    printf("读取数据耗时 %ld s\n", t2 - t1);
+    fprintf(stderr, "读取数据耗时 %ld s\n", t2 - t1);
 
     //printf("输出数据...\n");
     //ml::to_libsvm(fopen("demo.out.txt", "w"), &data);
 
-    ml::BinaryLogisticRegression lr;
+    ml::GLM lr;
     
-    printf("训练模型...\n");
+    fprintf(stderr, "训练模型...\n");
     lr.train(& data, c);
 
     time_t t3 = time(NULL);
-    printf("训练模型耗时 %ld s\n", t3 - t2);
+    fprintf(stderr, "训练模型耗时 %ld s\n", t3 - t2);
 
-    printf("b = %.5g\n", lr.b);
-    for(int i=0; i<lr.w.size(); i++) printf("%d: %.5g\n", i, lr.w[i]);
+    FILE * fp;
+    if(output == "stdout"){
+        fp = stdout;
+    }else{
+        fp = fopen(output.c_str(), "w");
+        if(fp == NULL){
+            fprintf(stderr, "打开文件 %s 失败!\n", output.c_str());
+            exit(1);
+        }
+    }
+    fprintf(fp, "b: %.5g\n", lr.b);
+    for(int i=0; i<lr.w.size(); i++) fprintf(fp, "%d: %.5g\n", i, lr.w[i]);
 
 }
