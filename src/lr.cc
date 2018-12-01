@@ -43,13 +43,16 @@ namespace ml{
         float b;
 
         void loss_function(Data * dptr, float * loss, std::vector<float> * dw, float * db, OBJECT_FUNCTION obj_func = object_function_logloss){
-            assert(dptr->x.size() == dptr->y.size());
+            //assert(dptr->x.size() == dptr->y.size());
 
             *loss = 0;
             if(dw != NULL && db != NULL){
                 for(int i=0; i<dw->size(); i++) (*dw)[i] = 0;
                 *db = 0;
             }
+            float sumloss = 0;
+
+            #pragma omp parallel for reduction(+:sumloss)
             for(int i=0; i<dptr->x.size(); i++){
                 float p = b;
                 for(int j=0; j<dptr->x[i].idx.size(); j++){
@@ -63,7 +66,7 @@ namespace ml{
                 if(dw != NULL && db != NULL){
                     float dp, lossi;
                     obj_func(p, dptr->y[i], &lossi, &dp);
-                    *loss += lossi;
+                    sumloss += lossi;
                     for(int j=0; j<dptr->x[i].idx.size(); j++){
                         int idx = dptr->x[i].idx[j];
                         float val = dptr->x[i].val[j];
@@ -72,9 +75,10 @@ namespace ml{
                     *db += dp;
                 }
             }
+
             for(int i=0; i<dw->size(); i++) (*dw)[i] /= dptr->x.size();
             *db /= dptr->x.size();
-            *loss /= dptr->x.size();
+            *loss = sumloss / dptr->x.size();
         }
 
         void init(Data *dptr){

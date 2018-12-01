@@ -6,6 +6,7 @@
 #include<string>
 #include<exception>
 #include <fstream>
+#include<assert.h>
 
 namespace ml {
     struct SparseVector {
