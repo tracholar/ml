@@ -42,6 +42,16 @@ namespace ml{
         std::vector<float> w;
         float b;
 
+        inline float inference(SparseVector& sv){
+            float score = b;
+            for(int j=0; j<sv.idx.size(); j++){
+                int idx = sv.idx[j];
+                float val = sv.val[j];
+                score += w[idx] * val;
+            }
+            return score;
+        }
+
         void loss_function(Data * dptr, float * loss, std::vector<float> * dw, float * db, OBJECT_FUNCTION obj_func = object_function_logloss){
             //assert(dptr->x.size() == dptr->y.size());
 
@@ -54,12 +64,7 @@ namespace ml{
 
             #pragma omp parallel for reduction(+:sumloss)
             for(int i=0; i<dptr->x.size(); i++){
-                float p = b;
-                for(int j=0; j<dptr->x[i].idx.size(); j++){
-                    int idx = dptr->x[i].idx[j];
-                    float val = dptr->x[i].val[j];
-                    p += w[idx] * val;
-                }
+                float p = inference(dptr->x[i]);
                 //p = sigmoid(p);
                 //fprintf(stderr, "%d %f\n", i, p);
 
